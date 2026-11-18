@@ -1,12 +1,9 @@
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 // Observer concreto: registra todos os lances aceitos com data e hora
 public class Auditor implements iObservadorLote {
-    private static final DateTimeFormatter FORMATO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-
     private List<String> registros;
 
     public Auditor() {
@@ -15,10 +12,9 @@ public class Auditor implements iObservadorLote {
 
     @Override
     public void atualizar(Lote lote, Lance lance) {
-        String registro = LocalDateTime.now().format(FORMATO) + " | lote=" + lote.getNome()
-                + " | participante=" + lance.getNomeParticipante()
-                + " | valor=R$ " + String.format("%.2f", lance.getValor());
-        registros.add(registro);
+        registros.add(LocalDateTime.now() + " | lote=" + lote.getNome()
+                + " | participante=" + lance.getParticipante()
+                + " | valor=R$ " + String.format("%.2f", lance.getValor()));
         System.out.println("   [Auditor] lance registrado");
     }
 

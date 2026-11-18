@@ -1,6 +1,5 @@
 // Decorator concreto: entrega expressa, R$ 450,00 fixos
 public class EntregaExpressaDecorator extends absServicoDecorator {
-    private static final double CUSTO = 450.00;
 
     public EntregaExpressaDecorator(iCompra compra) {
         super(compra);
@@ -8,11 +7,11 @@ public class EntregaExpressaDecorator extends absServicoDecorator {
 
     @Override
     public String getDescricao() {
-        return compra.getDescricao() + "\n + Entrega expressa: R$ " + String.format("%.2f", CUSTO);
+        return compra.getDescricao() + "\n + Entrega expressa: R$ 450.00";
     }
 
     @Override
     public double getCusto() {
-        return compra.getCusto() + CUSTO;
+        return compra.getCusto() + 450.00;
     }
 }

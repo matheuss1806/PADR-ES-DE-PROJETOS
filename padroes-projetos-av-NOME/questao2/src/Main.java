@@ -41,7 +41,7 @@ public class Main {
         bruno.darLance(notebook, 3200.00); // aceito
         carla.darLance(notebook, 3300.00); // recusado (minimo 3360)
         carla.darLance(notebook, 3500.00); // aceito
-        ana.darLance(notebook, 3700.00);   // aceito (Ana pode dar lance mesmo sem acompanhar)
+        ana.darLance(notebook, 3700.00);   // aceito (Ana pode dar lance mesmo sem acompanhar o lote)
 
         // campanha: o quadro passa a usar a regra de Eletronicos (RF07)
         System.out.println("\n----- Campanha -----");
@@ -55,7 +55,7 @@ public class Main {
         // fatura do comprador do quadro com servicos adicionais
         // (embalagem especial contratada duas vezes)
         System.out.println();
-        iCompra compra = new CompraLote(quadro.getNome(), quadro.getValorVenda());
+        iCompra compra = new CompraLote(quadro.getNome(), quadro.getLanceAtual());
         compra = new SeguroTransporteDecorator(compra);
         compra = new CertificadoAutenticidadeDecorator(compra);
         compra = new EmbalagemEspecialDecorator(compra);
@@ -63,13 +63,11 @@ public class Main {
         compra = new EntregaExpressaDecorator(compra);
 
         Fatura fatura = new Fatura();
-        fatura.imprimir(quadro.getMaiorLance().getNomeParticipante(), compra);
+        fatura.imprimir(compra);
 
-        // acerto dos vendedores
+        // acerto do vendedor do lote vendido
         System.out.println();
         quadro.imprimirAcertoVendedor();
-        System.out.println();
-        notebook.imprimirAcertoVendedor();
 
         System.out.println();
         auditor.imprimirRegistros();

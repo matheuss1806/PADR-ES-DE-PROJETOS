@@ -4,7 +4,7 @@ public class PainelLeiloeiro implements iObservadorLote {
     @Override
     public void atualizar(Lote lote, Lance lance) {
         System.out.println("   [Painel] Lote '" + lote.getNome() + "' | maior lance: R$ "
-                + String.format("%.2f", lote.getLanceAtual()) + " (" + lote.getMaiorLance().getNomeParticipante()
+                + String.format("%.2f", lote.getLanceAtual()) + " (" + lance.getParticipante()
                 + ") | total de lances: " + lote.getTotalLances());
     }
 }

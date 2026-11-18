@@ -5,17 +5,14 @@ public class SeguroTransporteDecorator extends absServicoDecorator {
         super(compra);
     }
 
-    private double custoServico() {
-        return compra.getValorVenda() * 0.015;
-    }
-
     @Override
     public String getDescricao() {
-        return compra.getDescricao() + "\n + Seguro de transporte (1,5%): R$ " + String.format("%.2f", custoServico());
+        return compra.getDescricao() + "\n + Seguro de transporte (1,5%): R$ "
+                + String.format("%.2f", compra.getValorVenda() * 0.015);
     }
 
     @Override
     public double getCusto() {
-        return compra.getCusto() + custoServico();
+        return compra.getCusto() + compra.getValorVenda() * 0.015;
     }
 }

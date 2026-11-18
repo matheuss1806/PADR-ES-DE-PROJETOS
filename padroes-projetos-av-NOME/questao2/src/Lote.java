@@ -4,17 +4,14 @@ import java.util.List;
 // Lote do leilao.
 // - Subject do Observer: guarda a lista de iObservadorLote e avisa a cada lance aceito.
 // - Context do Strategy: guarda a iRegraComissao vigente, que pode ser trocada em tempo de execucao.
-// So conhece interfaces (iObservadorLote, iLicitante, iRegraComissao), nenhuma classe concreta.
+// So conhece as interfaces iObservadorLote e iRegraComissao, nenhuma classe concreta.
 public class Lote {
-    private static final double AUMENTO_MINIMO = 0.05; // 5%
-
     private String nome;
     private String categoria;
     private double precoInicial;
     private double precoReserva;
     private double lanceAtual;
     private boolean aberto;
-    private boolean vendido;
     private double comissao;
 
     private List<Lance> lances;
@@ -29,7 +26,6 @@ public class Lote {
         this.lanceAtual = precoInicial; // RF01: ate o primeiro lance vale o preco inicial
         this.regraComissao = regraComissao;
         this.aberto = true;
-        this.vendido = false;
         this.lances = new ArrayList<Lance>();
         this.observadores = new ArrayList<iObservadorLote>();
     }
@@ -44,44 +40,36 @@ public class Lote {
     }
 
     // avisa todos que acompanham o lote, menos quem deu o lance
-    private void notificarObservadores(Lance lance) {
+    private void notificarObservadores(Lance lance, iObservadorLote autor) {
         for (iObservadorLote observador : observadores) {
-            if (observador != lance.getLicitante()) {
+            if (observador != autor) {
                 observador.atualizar(this, lance);
             }
         }
     }
 
     // ---------- Lances (RF02) ----------
-    public boolean receberLance(iLicitante licitante, double valor) {
-        System.out.println(licitante.getNome() + " oferece R$ " + String.format("%.2f", valor)
-                + " no lote '" + nome + "'");
+    public void receberLance(String participante, double valor, iObservadorLote autor) {
+        System.out.println(participante + " oferece R$ " + String.format("%.2f", valor) + " no lote '" + nome + "'");
         if (!aberto) {
             System.out.println("   Lance RECUSADO: o lote '" + nome + "' ja foi encerrado.");
-            return false;
+            return;
         }
-        double minimo = lanceAtual * (1 + AUMENTO_MINIMO);
-        // arredonda para centavos para evitar problema de casas decimais do double
-        minimo = Math.round(minimo * 100) / 100.0;
+        double minimo = lanceAtual * 1.05; // pelo menos 5% maior
         if (valor < minimo) {
             System.out.println("   Lance RECUSADO: o valor deve ser pelo menos 5% maior que o lance atual de R$ "
                     + String.format("%.2f", lanceAtual) + " (minimo R$ " + String.format("%.2f", minimo) + ").");
-            return false;
+            return;
         }
-        Lance lance = new Lance(licitante, valor);
+        Lance lance = new Lance(participante, valor);
         lances.add(lance);
         lanceAtual = valor;
         System.out.println("   Lance ACEITO.");
-        notificarObservadores(lance);
-        return true;
+        notificarObservadores(lance, autor);
     }
 
     // ---------- Strategy (RF07) ----------
     public void setRegraComissao(iRegraComissao regraComissao) {
-        if (!aberto) {
-            System.out.println("Nao e possivel trocar a regra de comissao: o lote '" + nome + "' ja foi encerrado.");
-            return;
-        }
         System.out.println("Regra de comissao do lote '" + nome + "' alterada de " + this.regraComissao.getDescricao()
                 + " para " + regraComissao.getDescricao());
         this.regraComissao = regraComissao;
@@ -89,25 +77,15 @@ public class Lote {
 
     // ---------- Encerramento (RF05) ----------
     public void encerrar() {
-        if (!aberto) {
-            System.out.println("O lote '" + nome + "' ja estava encerrado.");
-            return;
-        }
         aberto = false;
         if (!lances.isEmpty() && lanceAtual >= precoReserva) {
-            vendido = true;
             // a comissao usa a regra vigente no momento do encerramento
             comissao = regraComissao.calcular(lanceAtual);
-            System.out.println("Lote '" + nome + "' ENCERRADO: VENDIDO para " + getMaiorLance().getNomeParticipante()
+            System.out.println("Lote '" + nome + "' ENCERRADO: VENDIDO para " + getComprador()
                     + " por R$ " + String.format("%.2f", lanceAtual));
-        } else if (lances.isEmpty()) {
-            vendido = false;
-            System.out.println("Lote '" + nome + "' ENCERRADO: NAO VENDIDO (nenhum lance recebido)");
         } else {
-            vendido = false;
-            System.out.println("Lote '" + nome + "' ENCERRADO: NAO VENDIDO (maior lance R$ "
-                    + String.format("%.2f", lanceAtual) + " abaixo da reserva de R$ "
-                    + String.format("%.2f", precoReserva) + ")");
+            System.out.println("Lote '" + nome + "' ENCERRADO: NAO VENDIDO (preco de reserva de R$ "
+                    + String.format("%.2f", precoReserva) + " nao foi atingido)");
         }
     }
 
@@ -115,18 +93,10 @@ public class Lote {
     public void imprimirAcertoVendedor() {
         System.out.println("===== ACERTO DO VENDEDOR =====");
         System.out.println("Lote: " + nome + " (" + categoria + ")");
-        if (!vendido) {
-            System.out.println("Lote nao vendido: sem comissao e sem valor a repassar.");
-            return;
-        }
         System.out.println("Valor de venda:      R$ " + String.format("%.2f", lanceAtual));
         System.out.println("Comissao cobrada:    R$ " + String.format("%.2f", comissao)
                 + " [regra " + regraComissao.getDescricao() + "]");
-        System.out.println("Valor liquido:       R$ " + String.format("%.2f", getValorLiquidoVendedor()));
-    }
-
-    public double getValorLiquidoVendedor() {
-        return lanceAtual - comissao;
+        System.out.println("Valor liquido:       R$ " + String.format("%.2f", lanceAtual - comissao));
     }
 
     // ---------- getters ----------
@@ -134,50 +104,16 @@ public class Lote {
         return nome;
     }
 
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public double getPrecoInicial() {
-        return precoInicial;
-    }
-
-    public double getPrecoReserva() {
-        return precoReserva;
-    }
-
     public double getLanceAtual() {
         return lanceAtual;
-    }
-
-    public Lance getMaiorLance() {
-        if (lances.isEmpty()) {
-            return null;
-        }
-        return lances.get(lances.size() - 1);
     }
 
     public int getTotalLances() {
         return lances.size();
     }
 
-    public boolean isAberto() {
-        return aberto;
-    }
-
-    public boolean isVendido() {
-        return vendido;
-    }
-
-    public double getValorVenda() {
-        return lanceAtual;
-    }
-
-    public double getComissao() {
-        return comissao;
-    }
-
-    public iRegraComissao getRegraComissao() {
-        return regraComissao;
+    // o comprador e quem deu o ultimo lance aceito (o maior)
+    public String getComprador() {
+        return lances.get(lances.size() - 1).getParticipante();
     }
 }

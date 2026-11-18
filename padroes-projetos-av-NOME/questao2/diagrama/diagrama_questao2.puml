@@ -3,16 +3,14 @@ title Questao 2 - Casa de Leiloes Online\n(Observer + Strategy + Decorator)
 
 skinparam classAttributeIconSize 0
 
-' ===================== OBSERVER + STRATEGY (contexto) =====================
+' ===================== LOTE (Subject do Observer e Context do Strategy) =====================
 class Lote <<Subject (Observer) / Context (Strategy)>> {
-  - {static} AUMENTO_MINIMO : double = 0.05
   - nome : String
   - categoria : String
   - precoInicial : double
   - precoReserva : double
   - lanceAtual : double
   - aberto : boolean
-  - vendido : boolean
   - comissao : double
   - lances : List<Lance>
   - observadores : List<iObservadorLote>
@@ -20,50 +18,36 @@ class Lote <<Subject (Observer) / Context (Strategy)>> {
   + Lote(nome : String, categoria : String, precoInicial : double, precoReserva : double, regraComissao : iRegraComissao)
   + adicionarObservador(observador : iObservadorLote)
   + removerObservador(observador : iObservadorLote)
-  - notificarObservadores(lance : Lance)
-  + receberLance(licitante : iLicitante, valor : double) : boolean
+  - notificarObservadores(lance : Lance, autor : iObservadorLote)
+  + receberLance(participante : String, valor : double, autor : iObservadorLote)
   + setRegraComissao(regraComissao : iRegraComissao)
   + encerrar()
   + imprimirAcertoVendedor()
-  + getValorLiquidoVendedor() : double
   + getNome() : String
-  + getCategoria() : String
-  + getPrecoInicial() : double
-  + getPrecoReserva() : double
   + getLanceAtual() : double
-  + getMaiorLance() : Lance
   + getTotalLances() : int
-  + isAberto() : boolean
-  + isVendido() : boolean
-  + getValorVenda() : double
-  + getComissao() : double
-  + getRegraComissao() : iRegraComissao
+  + getComprador() : String
 }
 
 class Lance {
-  - licitante : iLicitante
+  - participante : String
   - valor : double
-  + Lance(licitante : iLicitante, valor : double)
-  + getLicitante() : iLicitante
-  + getNomeParticipante() : String
+  + Lance(participante : String, valor : double)
+  + getParticipante() : String
   + getValor() : double
 }
 
+' ===================== OBSERVER =====================
 package "Observer" {
   interface iObservadorLote <<Observer>> {
     + atualizar(lote : Lote, lance : Lance)
   }
 
-  interface iLicitante {
-    + getNome() : String
-  }
-
   class Participante <<ConcreteObserver>> {
     - nome : String
     + Participante(nome : String)
-    + darLance(lote : Lote, valor : double) : boolean
+    + darLance(lote : Lote, valor : double)
     + atualizar(lote : Lote, lance : Lance)
-    + getNome() : String
   }
 
   class PainelLeiloeiro <<ConcreteObserver>> {
@@ -71,7 +55,6 @@ package "Observer" {
   }
 
   class Auditor <<ConcreteObserver>> {
-    - {static} FORMATO : DateTimeFormatter
     - registros : List<String>
     + Auditor()
     + atualizar(lote : Lote, lance : Lance)
@@ -83,7 +66,7 @@ note top of iObservadorLote
   O Lote so conhece esta interface.
   Novo tipo de interessado = nova classe
   que implementa iObservadorLote.
-  Quem deu o lance nao e notificado.
+  Quem deu o lance (autor) nao e notificado.
 end note
 
 ' ===================== STRATEGY =====================
@@ -148,42 +131,38 @@ package "Decorator" {
 
   class SeguroTransporteDecorator <<ConcreteDecorator>> {
     + SeguroTransporteDecorator(compra : iCompra)
-    - custoServico() : double
     + getDescricao() : String
     + getCusto() : double
   }
 
   class CertificadoAutenticidadeDecorator <<ConcreteDecorator>> {
-    - {static} CUSTO : double = 300.00
     + CertificadoAutenticidadeDecorator(compra : iCompra)
     + getDescricao() : String
     + getCusto() : double
   }
 
   class EmbalagemEspecialDecorator <<ConcreteDecorator>> {
-    - {static} CUSTO : double = 180.00
     + EmbalagemEspecialDecorator(compra : iCompra)
     + getDescricao() : String
     + getCusto() : double
   }
 
   class EntregaExpressaDecorator <<ConcreteDecorator>> {
-    - {static} CUSTO : double = 450.00
     + EntregaExpressaDecorator(compra : iCompra)
     + getDescricao() : String
     + getCusto() : double
   }
 
   class Fatura <<Client (Decorator)>> {
-    + imprimir(comprador : String, compra : iCompra)
+    + imprimir(compra : iCompra)
   }
 }
 
 note bottom of absServicoDecorator
   Cada servico acrescenta sua descricao e seu custo.
-  Podem ser combinados em qualquer ordem e quantidade
-  (o mesmo servico pode ser contratado mais de uma vez).
-  Seguro de transporte = 1,5% do valor de venda.
+  Seguro de transporte: 1,5% do valor de venda.
+  Certificado: R$ 300,00 | Embalagem: R$ 180,00 | Entrega: R$ 450,00.
+  Podem ser combinados em qualquer ordem e quantidade.
 end note
 
 class Main {
@@ -193,12 +172,9 @@ class Main {
 ' ---------- Observer
 Lote o--> "0..*" iObservadorLote : observadores
 Lote *--> "0..*" Lance : lances
-Lote ..> iLicitante
-Lance --> "1" iLicitante : licitante
 iObservadorLote <|.. Participante
 iObservadorLote <|.. PainelLeiloeiro
 iObservadorLote <|.. Auditor
-iLicitante <|.. Participante
 iObservadorLote ..> Lote
 iObservadorLote ..> Lance
 Participante ..> Lote : darLance()

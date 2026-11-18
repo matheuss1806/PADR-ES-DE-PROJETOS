@@ -1,19 +1,15 @@
-// Lance aceito: guarda quem deu o lance e o valor (RF02)
+// Lance aceito: guarda o participante e o valor (RF02)
 public class Lance {
-    private iLicitante licitante;
+    private String participante;
     private double valor;
 
-    public Lance(iLicitante licitante, double valor) {
-        this.licitante = licitante;
+    public Lance(String participante, double valor) {
+        this.participante = participante;
         this.valor = valor;
     }
 
-    public iLicitante getLicitante() {
-        return licitante;
-    }
-
-    public String getNomeParticipante() {
-        return licitante.getNome();
+    public String getParticipante() {
+        return participante;
     }
 
     public double getValor() {
