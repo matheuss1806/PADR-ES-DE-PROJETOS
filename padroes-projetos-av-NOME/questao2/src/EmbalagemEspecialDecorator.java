@@ -7,7 +7,7 @@ public class EmbalagemEspecialDecorator extends absServicoDecorator {
 
     @Override
     public String getDescricao() {
-        return compra.getDescricao() + "\n + Embalagem especial: R$ 180.00";
+        return compra.getDescricao() + "\n + Embalagem especial: R$ " + String.format("%.2f", 180.00);
     }
 
     @Override

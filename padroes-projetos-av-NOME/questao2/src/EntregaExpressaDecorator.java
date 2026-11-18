@@ -7,7 +7,7 @@ public class EntregaExpressaDecorator extends absServicoDecorator {
 
     @Override
     public String getDescricao() {
-        return compra.getDescricao() + "\n + Entrega expressa: R$ 450.00";
+        return compra.getDescricao() + "\n + Entrega expressa: R$ " + String.format("%.2f", 450.00);
     }
 
     @Override
