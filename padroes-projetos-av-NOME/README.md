@@ -8,17 +8,18 @@ Padroes usados:
 - **Abstract Factory**: `iFabricaNuvem` (fabrica abstrata), `FabricaAws` e `FabricaAzure` (fabricas concretas),
   `iMaquinaVirtual`, `iArmazenamento` e `iFila` (produtos abstratos) e os produtos concretos de cada provedor.
   O `MontadorAmbiente` recebe uma unica fabrica e nao conhece as classes concretas (RNF01, RNF02, RNF03, RNF06).
-- **Singleton**: `Configuracao` (le o `config.properties` uma unica vez, double-checked locking) e
-  `AuditLog` (historico unico, holder + metodos `synchronized`) (RNF04, RNF05).
+- **Singleton**: `Configuracao` (le o `config.properties` uma unica vez) e `AuditLog` (historico unico).
+  Os dois tem construtor privado e `getInstance()` `synchronized`; o `registrar()` do `AuditLog`
+  tambem e `synchronized` para nao perder registros das threads (RNF04, RNF05).
 
-Executar (a partir da pasta `questao1`):
+Executar (a partir da pasta `questao1/src`, onde esta o `config.properties`):
 
 ```
-javac -d bin src/*.java
-java -cp bin Main
+javac *.java
+java Main
 ```
 
-O arquivo `src/config.properties` tem a regiao padrao e o orcamento maximo por ambiente.
+O arquivo `config.properties` tem a regiao padrao e o orcamento maximo por ambiente.
 
 ## Questao 2 - Casa de Leiloes Online
 
@@ -30,11 +31,11 @@ Padroes usados:
   `SeguroTransporteDecorator`, `CertificadoAutenticidadeDecorator`, `EmbalagemEspecialDecorator`, `EntregaExpressaDecorator`.
   A `Fatura` imprime qualquer compra do mesmo jeito (RNF03, RNF04).
 
-Executar (a partir da pasta `questao2`):
+Executar (a partir da pasta `questao2/src`):
 
 ```
-javac -d bin src/*.java
-java -cp bin Main
+javac *.java
+java Main
 ```
 
 ## Diagramas

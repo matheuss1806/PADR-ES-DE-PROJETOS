@@ -28,11 +28,6 @@ public class ArmazenamentoAws implements iArmazenamento {
     }
 
     @Override
-    public double getCustoGb() {
-        return CUSTO_GB;
-    }
-
-    @Override
     public double getCustoMensal() {
         return tamanhoGb * CUSTO_GB;
     }

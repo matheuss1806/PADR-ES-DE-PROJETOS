@@ -1,40 +1,32 @@
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 // Singleton: historico de auditoria unico em todo o programa.
-// Tecnica usada: initialization-on-demand holder (a JVM garante uma unica criacao).
 // Os metodos sao synchronized para que registros simultaneos nao se percam.
 public class AuditLog {
-    private static final DateTimeFormatter FORMATO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS");
+    //Atributo para persistir a instancia
+    private static AuditLog instance;
 
     private List<String> registros;
 
+    //Construtor privado
     private AuditLog() {
         registros = new ArrayList<String>();
     }
 
-    // classe interna que guarda a instancia, so e carregada no primeiro getInstance()
-    private static class Holder {
-        private static final AuditLog INSTANCE = new AuditLog();
+    //Metodo para uso da instancia
+    public static synchronized AuditLog getInstance() {
+        if (AuditLog.instance == null) {
+            AuditLog.instance = new AuditLog();
+        }
+        return AuditLog.instance;
     }
 
-    public static AuditLog getInstance() {
-        return Holder.INSTANCE;
-    }
-
-    // a data/hora e gerada dentro do synchronized, entao a ordem da lista
-    // e exatamente a ordem em que os registros foram feitos
+    // a data/hora e gerada dentro do synchronized, entao a lista
+    // fica na ordem em que os registros foram feitos
     public synchronized void registrar(String ambiente, String provedor, String resultado) {
-        String dataHora = LocalDateTime.now().format(FORMATO);
-        registros.add(dataHora + " | ambiente=" + ambiente + " | provedor=" + provedor + " | " + resultado);
-    }
-
-    // devolve uma copia que nao pode ser alterada por quem recebe
-    public synchronized List<String> getRegistros() {
-        return Collections.unmodifiableList(new ArrayList<String>(registros));
+        registros.add(LocalDateTime.now() + " | ambiente=" + ambiente + " | provedor=" + provedor + " | " + resultado);
     }
 
     public synchronized void imprimirHistorico() {

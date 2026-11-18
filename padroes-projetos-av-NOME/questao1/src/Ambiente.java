@@ -43,34 +43,20 @@ public class Ambiente {
         return total;
     }
 
-    // RF06: monta o resumo inteiro numa String so, para nao misturar
-    // com a saida de outras threads na hora de imprimir
-    public String getResumo() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("----- Ambiente provisionado -----\n");
-        sb.append("Ambiente: ").append(nome).append("\n");
-        sb.append("Provedor: ").append(provedor).append("\n");
-        sb.append("Regiao: ").append(regiao).append("\n");
+    // RF06: monta o resumo inteiro numa String so e imprime de uma vez,
+    // para nao misturar com a saida das outras threads
+    public void imprimirResumo() {
+        String resumo = "----- Ambiente provisionado -----\n";
+        resumo += "Ambiente: " + nome + "\n";
+        resumo += "Provedor: " + provedor + "\n";
+        resumo += "Regiao: " + regiao + "\n";
         for (iMaquinaVirtual maquina : maquinas) {
-            sb.append("  Maquina virtual: ").append(maquina.getId()).append("\n");
+            resumo += "  Maquina virtual: " + maquina.getId() + "\n";
         }
-        sb.append("  Armazenamento: ").append(armazenamento.getId())
-          .append(" (").append(armazenamento.getTamanhoGb()).append(" GB)\n");
-        sb.append("  Fila: ").append(fila.getId()).append("\n");
-        sb.append("Custo mensal estimado: R$ ").append(String.format("%.2f", getCustoMensal())).append("\n");
-        sb.append("---------------------------------");
-        return sb.toString();
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public String getProvedor() {
-        return provedor;
-    }
-
-    public String getRegiao() {
-        return regiao;
+        resumo += "  Armazenamento: " + armazenamento.getId() + " (" + armazenamento.getTamanhoGb() + " GB)\n";
+        resumo += "  Fila: " + fila.getId() + "\n";
+        resumo += "Custo mensal estimado: R$ " + String.format("%.2f", getCustoMensal()) + "\n";
+        resumo += "---------------------------------";
+        System.out.println(resumo);
     }
 }

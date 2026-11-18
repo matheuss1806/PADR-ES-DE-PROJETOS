@@ -8,7 +8,7 @@ public class MontadorAmbiente {
         this.fabrica = fabrica;
     }
 
-    public Ambiente provisionar(SolicitacaoAmbiente solicitacao) {
+    public void provisionar(SolicitacaoAmbiente solicitacao) {
         Configuracao config = Configuracao.getInstance();
         AuditLog audit = AuditLog.getInstance();
         String provedor = fabrica.getNomeProvedor();
@@ -20,7 +20,7 @@ public class MontadorAmbiente {
                     + " ultrapassa o orcamento de R$ " + String.format("%.2f", config.getOrcamentoMaximo());
             System.out.println("[RECUSADO] Ambiente " + solicitacao.getNomeAmbiente() + " (" + provedor + "): " + motivo);
             audit.registrar(solicitacao.getNomeAmbiente(), provedor, "RECUSADO - " + motivo);
-            return null;
+            return;
         }
 
         // cria os recursos, todos pela mesma fabrica (mesmo provedor)
@@ -31,10 +31,9 @@ public class MontadorAmbiente {
         ambiente.setArmazenamento(fabrica.criarArmazenamento(solicitacao.getArmazenamentoGb()));
         ambiente.setFila(fabrica.criarFila());
 
-        System.out.println(ambiente.getResumo());
+        ambiente.imprimirResumo();
         audit.registrar(solicitacao.getNomeAmbiente(), provedor,
                 "ACEITO - custo mensal estimado R$ " + String.format("%.2f", ambiente.getCustoMensal()));
-        return ambiente;
     }
 
     // RF04 calculado com os custos unitarios da fabrica, sem criar recursos

@@ -44,7 +44,6 @@ package "Abstract Factory" {
   interface iArmazenamento <<AbstractProduct>> {
     + getId() : String
     + getTamanhoGb() : int
-    + getCustoGb() : double
     + getCustoMensal() : double
   }
 
@@ -72,7 +71,6 @@ package "Abstract Factory" {
     - {static} proximoNumero() : int <<synchronized>>
     + getId() : String
     + getTamanhoGb() : int
-    + getCustoGb() : double
     + getCustoMensal() : double
   }
 
@@ -105,7 +103,6 @@ package "Abstract Factory" {
     - {static} proximoNumero() : int <<synchronized>>
     + getId() : String
     + getTamanhoGb() : int
-    + getCustoGb() : double
     + getCustoMensal() : double
   }
 
@@ -124,39 +121,33 @@ package "Abstract Factory" {
 package "Singleton" {
 
   class Configuracao <<Singleton>> {
-    - {static} instance : Configuracao <<volatile>>
+    - {static} instance : Configuracao
     - regiaoPadrao : String
     - orcamentoMaximo : double
     - Configuracao()
-    - abrirArquivo() : InputStream
-    + {static} getInstance() : Configuracao
+    + {static} getInstance() : Configuracao <<synchronized>>
     + getRegiaoPadrao() : String
     + getOrcamentoMaximo() : double
   }
 
   class AuditLog <<Singleton>> {
-    - {static} FORMATO : DateTimeFormatter
+    - {static} instance : AuditLog
     - registros : List<String>
     - AuditLog()
-    + {static} getInstance() : AuditLog
+    + {static} getInstance() : AuditLog <<synchronized>>
     + registrar(ambiente : String, provedor : String, resultado : String) <<synchronized>>
-    + getRegistros() : List<String> <<synchronized>>
     + imprimirHistorico() <<synchronized>>
   }
 
-  class "AuditLog.Holder" as Holder {
-    - {static} INSTANCE : AuditLog
-  }
-
   note right of Configuracao
-    Double-checked locking com volatile.
+    Construtor privado + getInstance() synchronized.
     O config.properties e lido uma unica vez,
     no construtor privado.
   end note
 
   note right of AuditLog
-    Initialization-on-demand holder.
-    Metodos synchronized: registros simultaneos
+    Construtor privado + getInstance() synchronized.
+    registrar() synchronized: registros simultaneos
     nao se perdem e ficam na ordem de gravacao.
   end note
 }
@@ -165,7 +156,7 @@ package "Singleton" {
 class MontadorAmbiente <<Client (Abstract Factory)>> {
   - fabrica : iFabricaNuvem
   + MontadorAmbiente(fabrica : iFabricaNuvem)
-  + provisionar(solicitacao : SolicitacaoAmbiente) : Ambiente
+  + provisionar(solicitacao : SolicitacaoAmbiente)
   - estimarCusto(solicitacao : SolicitacaoAmbiente) : double
 }
 
@@ -182,10 +173,7 @@ class Ambiente {
   + setArmazenamento(armazenamento : iArmazenamento)
   + setFila(fila : iFila)
   + getCustoMensal() : double
-  + getResumo() : String
-  + getNome() : String
-  + getProvedor() : String
-  + getRegiao() : String
+  + imprimirResumo()
 }
 
 class SolicitacaoAmbiente {
@@ -200,14 +188,16 @@ class SolicitacaoAmbiente {
   + getArmazenamentoGb() : int
 }
 
-class TarefaProvisionamento {
+class ProvisionamentoThread {
   - montador : MontadorAmbiente
   - solicitacao : SolicitacaoAmbiente
-  + TarefaProvisionamento(montador : MontadorAmbiente, solicitacao : SolicitacaoAmbiente)
+  + ProvisionamentoThread(montador : MontadorAmbiente, solicitacao : SolicitacaoAmbiente)
   + run()
 }
 
-interface Runnable <<java.lang>> {
+class Thread <<java.lang>> {
+  + start()
+  + join()
   + run()
 }
 
@@ -231,7 +221,7 @@ iArmazenamento <|.. ArmazenamentoAws
 iArmazenamento <|.. ArmazenamentoAzure
 iFila <|.. FilaAws
 iFila <|.. FilaAzure
-Runnable <|.. TarefaProvisionamento
+Thread <|-- ProvisionamentoThread
 
 ' ---------- fabricas criam somente os produtos do seu provedor
 FabricaAws ..> MaquinaVirtualAws : <<create>>
@@ -257,20 +247,19 @@ Ambiente o--> "1..*" iMaquinaVirtual : maquinas
 Ambiente o--> "1" iArmazenamento : armazenamento
 Ambiente o--> "1" iFila : fila
 
-TarefaProvisionamento --> "1" MontadorAmbiente
-TarefaProvisionamento --> "1" SolicitacaoAmbiente
+ProvisionamentoThread --> "1" MontadorAmbiente
+ProvisionamentoThread --> "1" SolicitacaoAmbiente
 
 ' ---------- singletons
 Configuracao --> "1" Configuracao : instance
-AuditLog +-- Holder
-Holder --> "1" AuditLog : INSTANCE
+AuditLog --> "1" AuditLog : instance
 
 ' ---------- main
 Main ..> FabricaAws : <<create>>
 Main ..> FabricaAzure : <<create>>
 Main ..> MontadorAmbiente : <<create>>
 Main ..> SolicitacaoAmbiente : <<create>>
-Main ..> TarefaProvisionamento : <<create>>
+Main ..> ProvisionamentoThread : <<create>>
 Main ..> AuditLog : imprimirHistorico()
 
 @enduml

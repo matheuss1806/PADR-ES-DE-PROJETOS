@@ -6,10 +6,9 @@ public class Main {
     private static iFabricaNuvem escolherFabrica(String provedor) {
         if (provedor.equals("Aws")) {
             return new FabricaAws();
-        } else if (provedor.equals("Azure")) {
+        } else {
             return new FabricaAzure();
         }
-        throw new IllegalArgumentException("Provedor desconhecido: " + provedor);
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -21,24 +20,23 @@ public class Main {
         SolicitacaoAmbiente s3 = new SolicitacaoAmbiente("erp-producao", "Azure", 3, 200);
         SolicitacaoAmbiente s4 = new SolicitacaoAmbiente("bigdata-analytics", "Azure", 8, 2000);
 
-        SolicitacaoAmbiente[] solicitacoes = { s1, s2, s3, s4 };
-        Thread[] threads = new Thread[solicitacoes.length];
+        // cada provisionamento roda em uma thread diferente
+        ProvisionamentoThread t1 = new ProvisionamentoThread(new MontadorAmbiente(escolherFabrica(s1.getProvedor())), s1);
+        ProvisionamentoThread t2 = new ProvisionamentoThread(new MontadorAmbiente(escolherFabrica(s2.getProvedor())), s2);
+        ProvisionamentoThread t3 = new ProvisionamentoThread(new MontadorAmbiente(escolherFabrica(s3.getProvedor())), s3);
+        ProvisionamentoThread t4 = new ProvisionamentoThread(new MontadorAmbiente(escolherFabrica(s4.getProvedor())), s4);
 
-        // cada provisionamento roda em uma thread diferente, todos ao mesmo tempo
-        for (int i = 0; i < solicitacoes.length; i++) {
-            iFabricaNuvem fabrica = escolherFabrica(solicitacoes[i].getProvedor());
-            MontadorAmbiente montador = new MontadorAmbiente(fabrica);
-            threads[i] = new Thread(new TarefaProvisionamento(montador, solicitacoes[i]),
-                    "thread-" + solicitacoes[i].getNomeAmbiente());
-        }
-        for (int i = 0; i < threads.length; i++) {
-            threads[i].start();
-        }
+        // inicia as quatro ao mesmo tempo
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
 
-        // espera todas as threads terminarem antes de imprimir o historico
-        for (int i = 0; i < threads.length; i++) {
-            threads[i].join();
-        }
+        // espera todas terminarem antes de imprimir o historico
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
 
         System.out.println();
         AuditLog.getInstance().imprimirHistorico();
