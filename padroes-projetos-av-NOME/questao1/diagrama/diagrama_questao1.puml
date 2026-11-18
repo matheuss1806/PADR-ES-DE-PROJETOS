@@ -1,0 +1,276 @@
+@startuml diagrama_questao1
+title Questao 1 - Provisionamento Multinuvem\n(Abstract Factory + Singleton)
+
+skinparam classAttributeIconSize 0
+
+' ===================== ABSTRACT FACTORY =====================
+package "Abstract Factory" {
+
+  interface iFabricaNuvem <<AbstractFactory>> {
+    + criarMaquinaVirtual() : iMaquinaVirtual
+    + criarArmazenamento(tamanhoGb : int) : iArmazenamento
+    + criarFila() : iFila
+    + getNomeProvedor() : String
+    + getCustoHoraMaquina() : double
+    + getCustoGbArmazenamento() : double
+    + getCustoFila() : double
+  }
+
+  class FabricaAws <<ConcreteFactory>> {
+    + criarMaquinaVirtual() : iMaquinaVirtual
+    + criarArmazenamento(tamanhoGb : int) : iArmazenamento
+    + criarFila() : iFila
+    + getNomeProvedor() : String
+    + getCustoHoraMaquina() : double
+    + getCustoGbArmazenamento() : double
+    + getCustoFila() : double
+  }
+
+  class FabricaAzure <<ConcreteFactory>> {
+    + criarMaquinaVirtual() : iMaquinaVirtual
+    + criarArmazenamento(tamanhoGb : int) : iArmazenamento
+    + criarFila() : iFila
+    + getNomeProvedor() : String
+    + getCustoHoraMaquina() : double
+    + getCustoGbArmazenamento() : double
+    + getCustoFila() : double
+  }
+
+  interface iMaquinaVirtual <<AbstractProduct>> {
+    + getId() : String
+    + getCustoHora() : double
+  }
+
+  interface iArmazenamento <<AbstractProduct>> {
+    + getId() : String
+    + getTamanhoGb() : int
+    + getCustoGb() : double
+    + getCustoMensal() : double
+  }
+
+  interface iFila <<AbstractProduct>> {
+    + getId() : String
+    + getCustoMensal() : double
+  }
+
+  class MaquinaVirtualAws <<ConcreteProduct>> {
+    + {static} CUSTO_HORA : double = 0.10
+    - {static} contador : int
+    - id : String
+    + MaquinaVirtualAws()
+    - {static} proximoNumero() : int <<synchronized>>
+    + getId() : String
+    + getCustoHora() : double
+  }
+
+  class ArmazenamentoAws <<ConcreteProduct>> {
+    + {static} CUSTO_GB : double = 0.023
+    - {static} contador : int
+    - id : String
+    - tamanhoGb : int
+    + ArmazenamentoAws(tamanhoGb : int)
+    - {static} proximoNumero() : int <<synchronized>>
+    + getId() : String
+    + getTamanhoGb() : int
+    + getCustoGb() : double
+    + getCustoMensal() : double
+  }
+
+  class FilaAws <<ConcreteProduct>> {
+    + {static} CUSTO_MENSAL : double = 0.40
+    - {static} contador : int
+    - id : String
+    + FilaAws()
+    - {static} proximoNumero() : int <<synchronized>>
+    + getId() : String
+    + getCustoMensal() : double
+  }
+
+  class MaquinaVirtualAzure <<ConcreteProduct>> {
+    + {static} CUSTO_HORA : double = 0.12
+    - {static} contador : int
+    - id : String
+    + MaquinaVirtualAzure()
+    - {static} proximoNumero() : int <<synchronized>>
+    + getId() : String
+    + getCustoHora() : double
+  }
+
+  class ArmazenamentoAzure <<ConcreteProduct>> {
+    + {static} CUSTO_GB : double = 0.02
+    - {static} contador : int
+    - id : String
+    - tamanhoGb : int
+    + ArmazenamentoAzure(tamanhoGb : int)
+    - {static} proximoNumero() : int <<synchronized>>
+    + getId() : String
+    + getTamanhoGb() : int
+    + getCustoGb() : double
+    + getCustoMensal() : double
+  }
+
+  class FilaAzure <<ConcreteProduct>> {
+    + {static} CUSTO_MENSAL : double = 0.50
+    - {static} contador : int
+    - id : String
+    + FilaAzure()
+    - {static} proximoNumero() : int <<synchronized>>
+    + getId() : String
+    + getCustoMensal() : double
+  }
+}
+
+' ===================== SINGLETON =====================
+package "Singleton" {
+
+  class Configuracao <<Singleton>> {
+    - {static} instance : Configuracao <<volatile>>
+    - regiaoPadrao : String
+    - orcamentoMaximo : double
+    - Configuracao()
+    - abrirArquivo() : InputStream
+    + {static} getInstance() : Configuracao
+    + getRegiaoPadrao() : String
+    + getOrcamentoMaximo() : double
+  }
+
+  class AuditLog <<Singleton>> {
+    - {static} FORMATO : DateTimeFormatter
+    - registros : List<String>
+    - AuditLog()
+    + {static} getInstance() : AuditLog
+    + registrar(ambiente : String, provedor : String, resultado : String) <<synchronized>>
+    + getRegistros() : List<String> <<synchronized>>
+    + imprimirHistorico() <<synchronized>>
+  }
+
+  class "AuditLog.Holder" as Holder {
+    - {static} INSTANCE : AuditLog
+  }
+
+  note right of Configuracao
+    Double-checked locking com volatile.
+    O config.properties e lido uma unica vez,
+    no construtor privado.
+  end note
+
+  note right of AuditLog
+    Initialization-on-demand holder.
+    Metodos synchronized: registros simultaneos
+    nao se perdem e ficam na ordem de gravacao.
+  end note
+}
+
+' ===================== DEMAIS CLASSES =====================
+class MontadorAmbiente <<Client (Abstract Factory)>> {
+  - fabrica : iFabricaNuvem
+  + MontadorAmbiente(fabrica : iFabricaNuvem)
+  + provisionar(solicitacao : SolicitacaoAmbiente) : Ambiente
+  - estimarCusto(solicitacao : SolicitacaoAmbiente) : double
+}
+
+class Ambiente {
+  + {static} HORAS_MES : int = 730
+  - nome : String
+  - provedor : String
+  - regiao : String
+  - maquinas : List<iMaquinaVirtual>
+  - armazenamento : iArmazenamento
+  - fila : iFila
+  + Ambiente(nome : String, provedor : String, regiao : String)
+  + adicionarMaquina(maquina : iMaquinaVirtual)
+  + setArmazenamento(armazenamento : iArmazenamento)
+  + setFila(fila : iFila)
+  + getCustoMensal() : double
+  + getResumo() : String
+  + getNome() : String
+  + getProvedor() : String
+  + getRegiao() : String
+}
+
+class SolicitacaoAmbiente {
+  - nomeAmbiente : String
+  - provedor : String
+  - quantidadeMaquinas : int
+  - armazenamentoGb : int
+  + SolicitacaoAmbiente(nomeAmbiente : String, provedor : String, quantidadeMaquinas : int, armazenamentoGb : int)
+  + getNomeAmbiente() : String
+  + getProvedor() : String
+  + getQuantidadeMaquinas() : int
+  + getArmazenamentoGb() : int
+}
+
+class TarefaProvisionamento {
+  - montador : MontadorAmbiente
+  - solicitacao : SolicitacaoAmbiente
+  + TarefaProvisionamento(montador : MontadorAmbiente, solicitacao : SolicitacaoAmbiente)
+  + run()
+}
+
+interface Runnable <<java.lang>> {
+  + run()
+}
+
+class Main {
+  - {static} escolherFabrica(provedor : String) : iFabricaNuvem
+  + {static} main(args : String[])
+}
+
+note bottom of Main
+  escolherFabrica() e o unico ponto que decide
+  o provedor (if). Para incluir o Gcp: criar
+  FabricaGcp + produtos Gcp e um else if aqui.
+end note
+
+' ---------- realizacoes
+iFabricaNuvem <|.. FabricaAws
+iFabricaNuvem <|.. FabricaAzure
+iMaquinaVirtual <|.. MaquinaVirtualAws
+iMaquinaVirtual <|.. MaquinaVirtualAzure
+iArmazenamento <|.. ArmazenamentoAws
+iArmazenamento <|.. ArmazenamentoAzure
+iFila <|.. FilaAws
+iFila <|.. FilaAzure
+Runnable <|.. TarefaProvisionamento
+
+' ---------- fabricas criam somente os produtos do seu provedor
+FabricaAws ..> MaquinaVirtualAws : <<create>>
+FabricaAws ..> ArmazenamentoAws : <<create>>
+FabricaAws ..> FilaAws : <<create>>
+FabricaAzure ..> MaquinaVirtualAzure : <<create>>
+FabricaAzure ..> ArmazenamentoAzure : <<create>>
+FabricaAzure ..> FilaAzure : <<create>>
+
+' ---------- fabrica abstrata devolve produtos abstratos
+iFabricaNuvem ..> iMaquinaVirtual
+iFabricaNuvem ..> iArmazenamento
+iFabricaNuvem ..> iFila
+
+' ---------- cliente e ambiente
+MontadorAmbiente --> "1" iFabricaNuvem : fabrica
+MontadorAmbiente ..> Ambiente : <<create>>
+MontadorAmbiente ..> SolicitacaoAmbiente
+MontadorAmbiente ..> Configuracao : getInstance()
+MontadorAmbiente ..> AuditLog : getInstance()
+
+Ambiente o--> "1..*" iMaquinaVirtual : maquinas
+Ambiente o--> "1" iArmazenamento : armazenamento
+Ambiente o--> "1" iFila : fila
+
+TarefaProvisionamento --> "1" MontadorAmbiente
+TarefaProvisionamento --> "1" SolicitacaoAmbiente
+
+' ---------- singletons
+Configuracao --> "1" Configuracao : instance
+AuditLog +-- Holder
+Holder --> "1" AuditLog : INSTANCE
+
+' ---------- main
+Main ..> FabricaAws : <<create>>
+Main ..> FabricaAzure : <<create>>
+Main ..> MontadorAmbiente : <<create>>
+Main ..> SolicitacaoAmbiente : <<create>>
+Main ..> TarefaProvisionamento : <<create>>
+Main ..> AuditLog : imprimirHistorico()
+
+@enduml
